@@ -1,87 +1,103 @@
-import java.util.Scanner;
+import java.util.*;
 
-public class MedianAndMean {
-
-    private static final int MAX_SIZE = 10000;
-    private static final int MAX_LINE_LENGTH = 255;
-
+public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        short[] numbers = new short[MAX_SIZE];
-        int count = 0;
 
-        while (count < MAX_SIZE && scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            if (line.length() > MAX_LINE_LENGTH) {
-                System.out.println("Error: Line exceeds maximum length.");
-                continue;
-            }
-            String[] tokens = line.split("[\\r\\n\\s]+"); // Розбиття рядка за пробілами, LF, CR
-            for (String token : tokens) {
-                if (token.isEmpty()) {
+        // Масив для зберігання введених чисел
+        List<Integer> numbers = new ArrayList<>();
+
+        // Флаг, що позначає, чи було натиснуто Enter в попередньому введенні
+        boolean previousEnter = false;
+
+        while (true) {
+            // Зчитування введеного рядка
+            String input = scanner.nextLine().trim();
+
+            // Перевірка, чи введено порожній рядок (Enter)
+            if (input.isEmpty()) {
+                if (previousEnter) {
+                    // Якщо попередній рядок також був порожнім (подвійний Enter),
+                    // тоді виходимо з циклу
+                    break;
+                } else {
+                    // Якщо це перший порожній рядок, то встановлюємо прапорець,
+                    // що позначає, що був натиснутий Enter
+                    previousEnter = true;
                     continue;
                 }
-                numbers[count++] = parseShort(token);
+            }
+
+            // Розділення введеного рядка на числа за пробілами
+            String[] numStrings = input.split("\\s+");
+
+            // Парсимо кожне число та додаємо його до списку, ігноруючи некоректні значення
+            for (String numString : numStrings) {
+                try {
+                    int number = Integer.parseInt(numString);
+                    numbers.add(number);
+                    previousEnter = false; // Очищуємо флаг, оскільки введено щось інше, а не порожній рядок
+                } catch (NumberFormatException e) {
+                    // Ігноруємо некоректне значення і продовжуємо зчитування
+                    System.out.println("Ігноруємо некоректне число: " + numString);
+                }
             }
         }
 
-        mergeSort(numbers, 0, count - 1);
+        // Перевірка, чи список не порожній перед обробкою
+        if (!numbers.isEmpty()) {
+            // Виклик методів обробки для обчислення медіани, середнього значення та сортування
+            bubbleSort(numbers);
 
-        int medianIndex = count / 2;
-        int median = numbers[medianIndex];
+            // Виведення відсортованих чисел
+            System.out.println("Відсортовані числа:");
+            for (int number : numbers) {
+                System.out.println(number);
+            }
 
+            // Обчислення та виведення медіани
+            double median = calculateMedian(numbers);
+            System.out.println("Медіана: " + median);
+
+            // Обчислення та виведення середнього значення
+            double average = calculateAverage(numbers);
+            System.out.println("Середнє значення: " + average);
+        } else {
+            System.out.println("Список чисел порожній. Немає даних для обробки.");
+        }
+    }
+
+    // Алгоритм сортування Bubble Sort
+    private static void bubbleSort(List<Integer> arr) {
+        int n = arr.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr.get(j) > arr.get(j + 1)) {
+                    // Swap arr[j] and arr[j+1]
+                    int temp = arr.get(j);
+                    arr.set(j, arr.get(j + 1));
+                    arr.set(j + 1, temp);
+                }
+            }
+        }
+    }
+
+    // Метод для обчислення медіани
+    private static double calculateMedian(List<Integer> arr) {
+        int size = arr.size();
+        if (size % 2 == 0) {
+            return (arr.get(size / 2) + arr.get(size / 2 - 1)) / 2.0;
+        } else {
+            return arr.get(size / 2);
+        }
+    }
+
+    // Метод для обчислення середнього значення
+    private static double calculateAverage(List<Integer> arr) {
         int sum = 0;
-        for (int i = 0; i < count; i++) {
-            sum += numbers[i];
+        for (int num : arr) {
+            sum += num;
         }
-        int mean = sum / count;
-
-        System.out.println(median);
-        System.out.println(mean);
-    }
-
-    private static short parseShort(String s) {
-        try {
-            return Short.parseShort(s);
-        } catch (NumberFormatException e) {
-            // Обробка переповнення
-            if (s.charAt(0) == '-') {
-                return Short.MIN_VALUE;
-            } else {
-                return Short.MAX_VALUE;
-            }
-        }
-    }
-
-    private static void mergeSort(short[] numbers, int left, int right) {
-        if (left < right) {
-            int middle = (left + right) / 2;
-            mergeSort(numbers, left, middle);
-            mergeSort(numbers, middle + 1, right);
-            merge(numbers, left, middle, right);
-        }
-    }
-
-    private static void merge(short[] numbers, int left, int middle, int right) {
-        short[] leftArray = new short[middle - left + 1];
-        short[] rightArray = new short[right - middle];
-
-        System.arraycopy(numbers, left, leftArray, 0, leftArray.length);
-        System.arraycopy(numbers, middle + 1, rightArray, 0, rightArray.length);
-
-        int i = 0, j = 0, k = left;
-        while (i < leftArray.length && j < rightArray.length) {
-            if (leftArray[i] <= rightArray[j]) {
-                numbers[k++] = leftArray[i++];
-            } else {
-                numbers[k++] = rightArray[j++];
-            }
-        }
-        while (i < leftArray.length) {
-            numbers[k++] = leftArray[i++];
-        }
-        while (j < rightArray.length) {
-            numbers[k++] = rightArray[j++];
-        }
+        return (double) sum / arr.size();
     }
 }
